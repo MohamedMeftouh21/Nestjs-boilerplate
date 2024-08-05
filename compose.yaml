@@ -1,0 +1,61 @@
+services:
+  nginx:
+    image: nginx:1.26.1-alpine
+    ports:
+      - 8080:8080
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - public
+    depends_on:
+      web:
+        condition: service_healthy
+        restart: true
+  web:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile 
+    environment:
+      - TYPE=postgres
+      - PG_USER=test
+      - PG_PASSWORD=test
+      - PG_DB=test
+      - PG_PORT=5432
+      - PG_HOST=postgres
+    depends_on:
+      - postgres
+    networks:
+      - private
+      - public
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/about"]
+      interval: 5s
+      retries: 5
+      start_period: 15s
+      timeout: 5s
+
+  postgres:
+    image: postgres:16.3
+    restart: always
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_DB: test
+      POSTGRES_PASSWORD: test
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - private
+
+volumes:
+  postgres-data:
+
+networks:
+  private:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "10.0.0.0/19"
+          gateway: "10.0.0.1"
+  public:
+    driver: bridge
