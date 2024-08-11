@@ -7,15 +7,12 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
     networks:
       - public
-    depends_on:
-      web:
-        condition: service_healthy
-        restart: true
+
   web:
     restart: always
     build:
       context: .
-      dockerfile: Dockerfile 
+      dockerfile: Dockerfile
     environment:
       - TYPE=postgres
       - PG_USER=test
@@ -28,15 +25,9 @@ services:
     networks:
       - private
       - public
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/about"]
-      interval: 5s
-      retries: 5
-      start_period: 15s
-      timeout: 5s
 
   postgres:
-    image: postgres:16.3
+    image: postgres:13
     restart: always
     environment:
       POSTGRES_USER: test
